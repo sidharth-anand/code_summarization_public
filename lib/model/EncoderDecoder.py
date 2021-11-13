@@ -209,13 +209,13 @@ class TreeEncoder_W2V(nn.Module):
             if not tree.parent:
                 # max_length = int(torch.max(lengths.data))
                 max_length = np.max(lengths)
-                output.data.unsqueeze_(1)
+                output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
                     output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
-                state[0].data.unsqueeze_(1)
-                state[1].data.unsqueeze_(1)
+                state[0].unsqueeze_(1)
+                state[1].unsqueeze_(1)
         return output, state
 
     # def get_child_state(self, tree):
@@ -270,13 +270,13 @@ class TreeEncoder(nn.Module):
             if not tree.parent:
                 # max_length = int(torch.max(lengths.data))
                 max_length = np.max(lengths)
-                output.data.unsqueeze_(1)
+                output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
                     output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
-                state[0].data.unsqueeze_(1)
-                state[1].data.unsqueeze_(1)
+                state[0].unsqueeze_(1)
+                state[1].unsqueeze_(1)
         return output, state
 
     # def get_child_state(self, tree):
@@ -325,13 +325,13 @@ class HybridEncoder(nn.Module):
             if not tree.parent:
                 # max_length = int(torch.max(lengths.data))
                 max_length = np.max(lengths)
-                output.data.unsqueeze_(1)
+                output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
                     output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
-                state[0].data.unsqueeze_(1)
-                state[1].data.unsqueeze_(1)
+                state[0].unsqueeze_(1)
+                state[1].unsqueeze_(1)
         return output, state
 
 class TreeDecoder_W2V(nn.Module):
@@ -544,7 +544,7 @@ class Hybrid2SeqModel(nn.Module):
     def backward(self, outputs, targets, weights, normalizer, criterion, regression=False):
         grad_output, loss = self.generator.backward(outputs, targets, weights, normalizer, criterion, regression)
         outputs.backward(grad_output)
-        return loss
+        return grad_output, loss
 
     def predict(self, outputs, targets, weights, criterion):
         return self.generator.predict(outputs, targets, weights, criterion)

@@ -16,11 +16,14 @@ class BaseGenerator(nn.Module):
     def backward(self, outputs, targets, weights, normalizer, criterion, regression=False):
         outputs = Variable(outputs.data, requires_grad=True)
 
+        print(outputs, targets, weights, normalizer, criterion)
+
         logits = outputs.contiguous().view(-1) if regression else self.forward(outputs)
 
         loss = criterion(logits, targets.contiguous().view(-1), weights.contiguous().view(-1))
         loss.div(normalizer).backward()
-        loss = loss.data[0]
+        
+        loss = loss.data
 
         if outputs.grad is None:
             grad_output = torch.zeros(outputs.size())
