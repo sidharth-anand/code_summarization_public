@@ -29,15 +29,15 @@ class Evaluator(object):
             if self.opt.data_type == 'code':
                 targets = batch[2]
                 # attention_mask = batch[2][0].data.eq(lib.Constants.PAD).t()
-                attention_mask = batch[1][2][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[1][2][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'text':
                 targets = batch[2]
                 # attention_mask = batch[0][0].data.eq(lib.Constants.PAD).t()
-                attention_mask = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[0][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'hybrid':
                 targets = batch[2]
-                attention_mask_code = batch[1][2][0].data.eq(lib.Constants.PAD).t()
-                attention_mask_txt = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask_code = batch[1][2][0].eq(lib.Constants.PAD).t()
+                attention_mask_txt = batch[0][0].eq(lib.Constants.PAD).t()
 
             if self.opt.has_attn:
                 if self.opt.data_type == 'code' or self.opt.data_type == 'text':
@@ -48,14 +48,14 @@ class Evaluator(object):
             outputs = self.model(batch, True)
 
             weights = targets.ne(lib.Constants.PAD).float()
-            num_words = weights.data.sum()
+            num_words = weights.sum()
             _, loss = self.model.predict(outputs, targets, weights, self.loss_func)
 
             preds = self.model.translate(batch, self.max_length)
             preds = preds.t().tolist()
             srcs = batch[0][0]
-            srcs = srcs.data.t().tolist()
-            targets = targets.data.t().tolist()
+            srcs = srcs.t().tolist()
+            targets = targets.t().tolist()
 
             rewards, _ = self.sent_reward_func(preds, targets)
 

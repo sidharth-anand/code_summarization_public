@@ -62,14 +62,14 @@ class Trainer(object):
             self.model.zero_grad()
             if self.opt.data_type == 'code':
                 targets = batch[2]
-                attention_mask = batch[1][2][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[1][2][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'text':
                 targets = batch[2]
-                attention_mask = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[0][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'hybrid':
                 targets = batch[2]
-                attention_mask_code = batch[1][2][0].data.eq(lib.Constants.PAD).t()
-                attention_mask_txt = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask_code = batch[1][2][0].eq(lib.Constants.PAD).t()
+                attention_mask_txt = batch[0][0].eq(lib.Constants.PAD).t()
 
             if self.opt.has_attn:
                 if self.opt.data_type == 'code' or self.opt.data_type == 'text':
@@ -80,7 +80,7 @@ class Trainer(object):
             outputs = self.model(batch, eval=False)
 
             weights = targets.ne(lib.Constants.PAD).float()
-            num_words = weights.data.sum()
+            num_words = weights.sum()
             loss = self.model.backward(outputs, targets, weights, num_words, self.loss_func)
             self.opt.iteration += 1
             print("iteration: %s, loss: %s " % (self.opt.iteration, loss))

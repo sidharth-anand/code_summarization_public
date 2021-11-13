@@ -30,9 +30,9 @@ class HybridAttention(nn.Module):
         attn_txt = torch.bmm(context_txt, targetT_txt).squeeze(2)  # batch x sourceL
 
         if self.mask_tree is not None and self.mask_txt is not None:
-            attn_tree.data.masked_fill_(self.mask_tree, -_INF)
+            attn_tree.masked_fill_(self.mask_tree, -_INF)
             attn_tree = self.sm(attn_tree)
-            attn_txt.data.masked_fill_(self.mask_txt, -_INF)
+            attn_txt.masked_fill_(self.mask_txt, -_INF)
             attn_txt = self.sm(attn_txt)
 
         attn3_tree = attn_tree.view(attn_tree.size(0), 1, attn_tree.size(1))  # batch x 1 x sourceL

@@ -102,14 +102,14 @@ class ReinforceTrainer(object):
             batch = self.train_data[i] # batch_order[i]
             if self.opt.data_type == 'code':
                 targets = batch[2]
-                attention_mask = batch[1][2][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[1][2][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'text':
                 targets = batch[2]
-                attention_mask = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask = batch[0][0].eq(lib.Constants.PAD).t()
             elif self.opt.data_type == 'hybrid':
                 targets = batch[2]
-                attention_mask_code = batch[1][2][0].data.eq(lib.Constants.PAD).t()
-                attention_mask_txt = batch[0][0].data.eq(lib.Constants.PAD).t()
+                attention_mask_code = batch[1][2][0].eq(lib.Constants.PAD).t()
+                attention_mask_txt = batch[0][0].eq(lib.Constants.PAD).t()
 
             batch_size = targets.size(1)
 
@@ -125,7 +125,7 @@ class ReinforceTrainer(object):
             samples, outputs = self.actor.sample(batch, self.max_length)
 
             # Calculate rewards
-            rewards, samples = self.sent_reward_func(samples.t().tolist(), targets.data.t().tolist())
+            rewards, samples = self.sent_reward_func(samples.t().tolist(), targets.t().tolist())
             reward = sum(rewards)
 
             # Perturb rewards (if specified).
@@ -140,7 +140,7 @@ class ReinforceTrainer(object):
 
             # Update critic.
             critic_weights = samples.ne(lib.Constants.PAD).float()
-            num_words = critic_weights.data.sum()
+            num_words = critic_weights.sum()
             if not no_update:
                 if self.opt.data_type == 'code':
                     baselines = self.critic((batch[0], batch[1], samples, batch[3]), eval=False, regression=True)
@@ -157,7 +157,7 @@ class ReinforceTrainer(object):
             # Update actor
             if not pretrain_critic and not no_update:
                 # Subtract baseline from reward
-                norm_rewards = Variable((rewards - baselines).data)
+                norm_rewards = Variable((rewards - baselines))
                 actor_weights = norm_rewards * critic_weights
                 # TODO: can use PyTorch reinforce() here but that function is a black box.
                 # This is an alternative way where you specify an objective that gives the same gradient

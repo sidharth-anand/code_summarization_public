@@ -43,7 +43,7 @@ class Encoder_W2V(nn.Module):
         return emb
 
     def forward(self, inputs, hidden=None):
-        input = inputs[0].data.cpu().numpy()
+        input = inputs[0].cpu().numpy()
         emb = self.embedding(input)
         emb = pack(emb, inputs[1])
         outputs, hidden_t = self.rnn(emb, hidden)
@@ -192,7 +192,7 @@ class TreeEncoder_W2V(nn.Module):
             if self.cudaFlag:
                 node = node.cuda()
             # node = self.embeddings(Variable(torch.LongTensor([self.dicts.lookup(tree.content, onmt.Constants.UNK)]).unsqueeze(1)).cuda())
-            # node.data.squeeze_(1)
+            # node.squeeze_(1)
             # print "node: ", node.size()
             # print node
             output, state = self.leaf_module.forward(Variable(node, requires_grad=True))
@@ -207,12 +207,12 @@ class TreeEncoder_W2V(nn.Module):
             output = torch.cat([lo, ro])
             # del lc, lh, lo, rc, rh, ro
             if not tree.parent:
-                # max_length = int(torch.max(lengths.data))
+                # max_length = int(torch.max(lengths))
                 max_length = np.max(lengths)
                 output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
-                    output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
+                    output = torch.cat([output, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
                 state[0].unsqueeze_(1)
                 state[1].unsqueeze_(1)
@@ -268,12 +268,12 @@ class TreeEncoder(nn.Module):
             output = torch.cat([lo, ro])
             # del lc, lh, lo, rc, rh, ro
             if not tree.parent:
-                # max_length = int(torch.max(lengths.data))
+                # max_length = int(torch.max(lengths))
                 max_length = np.max(lengths)
                 output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
-                    output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
+                    output = torch.cat([output, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
                 state[0].unsqueeze_(1)
                 state[1].unsqueeze_(1)
@@ -323,12 +323,12 @@ class HybridEncoder(nn.Module):
             output = torch.cat([lo, ro])
             # del lc, lh, lo, rc, rh, ro
             if not tree.parent:
-                # max_length = int(torch.max(lengths.data))
+                # max_length = int(torch.max(lengths))
                 max_length = np.max(lengths)
                 output.unsqueeze_(1)
                 supl = max_length - output.size()[0]
                 if supl > 0:
-                    output.data = torch.cat([output.data, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
+                    output = torch.cat([output, torch.zeros((supl, output.size()[1], output.size()[2])).cuda()], 0)
 
                 state[0].unsqueeze_(1)
                 state[1].unsqueeze_(1)
@@ -393,7 +393,7 @@ class TreeDecoder_W2V(nn.Module):
         # embs = self.word_lut(inputs)
         # print "decoder-embs: "
         # print embs
-        input = inputs.data.cpu().numpy()
+        input = inputs.cpu().numpy()
         embs = self.embedding(input)
 
         outputs = []
@@ -504,7 +504,7 @@ class Hybrid2SeqModel(nn.Module):
     def make_init_decoder_output(self, context):
         batch_size = context.size(1)
         h_size = (batch_size, self.decoder.hidden_size)
-        return Variable(context.data.new(*h_size).zero_(), requires_grad=False)
+        return Variable(context.new(*h_size).zero_(), requires_grad=False)
 
     def initialize(self, inputs, eval):
         tgt = inputs[2]
@@ -544,7 +544,7 @@ class Hybrid2SeqModel(nn.Module):
     def backward(self, outputs, targets, weights, normalizer, criterion, regression=False):
         grad_output, loss = self.generator.backward(outputs, targets, weights, normalizer, criterion, regression)
         outputs.backward(grad_output)
-        return grad_output, loss
+        return loss
 
     def predict(self, outputs, targets, weights, criterion):
         return self.generator.predict(outputs, targets, weights, criterion)
@@ -556,14 +556,14 @@ class Hybrid2SeqModel(nn.Module):
 
         preds = []
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             # output, hidden = self.decoder.step(emb, output, hidden, context)
             output, hidden_tree, hidden_txt = self.decoder.step(emb, output, hidden_tree, context_tree, hidden_txt, context_txt)
 
             logit = self.generator(output)
-            pred = logit.max(1)[1].view(-1).data
+            pred = logit.max(1)[1].view(-1)
             preds.append(pred)
 
             # Stop if all sentences reach EOS.
@@ -582,7 +582,7 @@ class Hybrid2SeqModel(nn.Module):
         outputs = []
         samples = []
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             # output, hidden = self.decoder.step(emb, output, hidden, context)
@@ -590,7 +590,7 @@ class Hybrid2SeqModel(nn.Module):
 
             outputs.append(output)
             dist = F.softmax(self.generator(output))
-            sample = dist.multinomial(1, replacement=False).view(-1).data
+            sample = dist.multinomial(1, replacement=False).view(-1)
             samples.append(sample)
 
             # Stop if all sentences reach EOS.
@@ -614,7 +614,7 @@ class Tree2SeqModel(nn.Module):
     def make_init_decoder_output(self, context):
         batch_size = context.size(1)
         h_size = (batch_size, self.decoder.hidden_size)
-        return Variable(context.data.new(*h_size).zero_(), requires_grad=False)
+        return Variable(context.new(*h_size).zero_(), requires_grad=False)
 
     def _fix_enc_hidden(self, h):
         #  the encoder hidden is  (layers*directions) x batch x dim
@@ -678,12 +678,12 @@ class Tree2SeqModel(nn.Module):
 
         preds = []
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             output, hidden = self.decoder.step(emb, output, hidden, context)
             logit = self.generator(output)
-            pred = logit.max(1)[1].view(-1).data
+            pred = logit.max(1)[1].view(-1)
             preds.append(pred)
 
             # Stop if all sentences reach EOS.
@@ -702,13 +702,13 @@ class Tree2SeqModel(nn.Module):
         outputs = []
         samples = []
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             output, hidden = self.decoder.step(emb, output, hidden, context)
             outputs.append(output)
             dist = F.softmax(self.generator(output))
-            sample = dist.multinomial(1, replacement=False).view(-1).data
+            sample = dist.multinomial(1, replacement=False).view(-1)
             samples.append(sample)
 
             # Stop if all sentences reach EOS.
@@ -732,7 +732,7 @@ class Seq2SeqModel(nn.Module):
     def make_init_decoder_output(self, context):
         batch_size = context.size(1)
         h_size = (batch_size, self.decoder.hidden_size)
-        return Variable(context.data.new(*h_size).zero_(), requires_grad=False)
+        return Variable(context.new(*h_size).zero_(), requires_grad=False)
 
     def _fix_enc_hidden(self, h):
         #  the encoder hidden is  (layers*directions) x batch x dim
@@ -781,12 +781,12 @@ class Seq2SeqModel(nn.Module):
         
         preds = [] 
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             output, hidden = self.decoder.step(emb, output, hidden, context)
             logit = self.generator(output)
-            pred = logit.max(1)[1].view(-1).data
+            pred = logit.max(1)[1].view(-1)
             preds.append(pred)
 
             num_eos |= (pred == lib.Constants.EOS)
@@ -804,13 +804,13 @@ class Seq2SeqModel(nn.Module):
         outputs = []
         samples = []
         batch_size = targets.size(1)
-        num_eos = targets[0].data.byte().new(batch_size).zero_()
+        num_eos = targets[0].byte().new(batch_size).zero_()
 
         for i in range(max_length):
             output, hidden = self.decoder.step(emb, output, hidden, context)
             outputs.append(output)
             dist = F.softmax(self.generator(output))
-            sample = dist.multinomial(1, replacement=False).view(-1).data
+            sample = dist.multinomial(1, replacement=False).view(-1)
             samples.append(sample)
 
             # Stop if all sentences reach EOS.

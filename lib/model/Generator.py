@@ -14,7 +14,7 @@ class BaseGenerator(nn.Module):
         return self.generator(inputs.contiguous().view(-1, inputs.size(-1)))
 
     def backward(self, outputs, targets, weights, normalizer, criterion, regression=False):
-        outputs = Variable(outputs.data, requires_grad=True)
+        outputs = Variable(outputs, requires_grad=True)
 
         print(outputs, targets, weights, normalizer, criterion)
 
@@ -28,15 +28,15 @@ class BaseGenerator(nn.Module):
         if outputs.grad is None:
             grad_output = torch.zeros(outputs.size())
         else:
-            grad_output = outputs.grad.data
+            grad_output = outputs.grad
 
         return grad_output, loss
 
     def predict(self, outputs, targets, weights, criterion):
         logits = self.forward(outputs)
-        preds = logits.data.max(1)[1].view(outputs.size(0), -1)
+        preds = logits.max(1)[1].view(outputs.size(0), -1)
 
-        loss = criterion(logits, targets.contiguous().view(-1), weights.contiguous().view(-1)).data[0]
+        loss = criterion(logits, targets.contiguous().view(-1), weights.contiguous().view(-1)).data
 
         return preds, loss
 
