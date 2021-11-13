@@ -56,7 +56,7 @@ def get_opt():
     parser.add_argument('-start_decay_at', type=int, default=5,
                         help="""Start decaying every epoch after and including this epoch""")
     # GPU
-    parser.add_argument('-gpus', default=[0], nargs='+', type=int, help="Use CUDA on the listed devices.")
+    parser.add_argument('-gpus', default=[1], nargs='+', type=int, help="Use CUDA on the listed devices.")
     parser.add_argument('-log_interval', type=int, default=50, help="Print stats at this interval.")
     parser.add_argument('-seed', type=int, default=3435, # default=-1
                         help="""Random seed used for the experiments reproducibility.""")
@@ -89,7 +89,7 @@ def get_opt():
 def get_data_trees(trees):
     data_trees = []
     for t_json in trees:
-        for k, node in t_json.iteritems():
+        for k, node in t_json.items():
             if node['parent'] == None:
                 root_idx = k
         tree = json2tree_binary(t_json, Tree(), root_idx)

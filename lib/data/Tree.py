@@ -4,8 +4,8 @@
 
 import lib
 import codecs
-import Constants
-from Dict import Dict
+import lib.data.Constants as Constants
+from lib.data.Dict import Dict
 import ast, asttokens
 # from ..parser.JavaLexer import JavaLexer
 # from ..parser.JavaParser import JavaParser
@@ -192,7 +192,7 @@ def traverse_python_tree(atok, root):
         current_idx += 1
 
     # update_parent
-    for k, node in node_json.iteritems():
+    for k, node in node_json.items():
         children = [c for c in node['children'] if c.startswith(Constants.NODE_FIX)]
         if len(children):
             for c in children:
@@ -226,7 +226,7 @@ def traverse_java_tree(tree, node_json, idx=1, global_idx=1):
 
 def split_tree(tree_json, idx_upper):
     tree_json_splited = copy.deepcopy(tree_json)
-    for k, node in tree_json.iteritems():
+    for k, node in tree_json.items():
         if len(node['children']) > 2:
             tree_json_splited['%s%s'%(Constants.NODE_FIX, idx_upper + 1)] = {'node': 'Tmp', 'children': node['children'][1:], 'parent': k} # idx_upper + 2
             for ch in node['children'][1:]:
@@ -234,7 +234,7 @@ def split_tree(tree_json, idx_upper):
             tree_json_splited[k]['children'] =  [tree_json_splited[k]['children'][0],'%s%s'%(Constants.NODE_FIX, idx_upper + 1)]# idx_upper + 2
 
             idx_upper += 1
-    for k, node in tree_json_splited.iteritems():
+    for k, node in tree_json_splited.items():
         children_length = len([c for c in node['children'] if c.startswith(Constants.NODE_FIX)])
         if children_length > 2:
             tree_json_splited = split_tree(tree_json_splited, idx_upper)
@@ -246,7 +246,7 @@ def _removekey(d, key):
     return r
 
 def merge_tree(tree_json):
-    for k, node in tree_json.iteritems():
+    for k, node in tree_json.items():
         children_length = len([c for c in node['children'] if c.startswith(Constants.NODE_FIX)])
         if children_length == 1:
             del_key = node['children'][0]
@@ -259,7 +259,7 @@ def merge_tree(tree_json):
             tree_json = _removekey(tree_json, del_key)
             break
 
-    for k, node in tree_json.iteritems():
+    for k, node in tree_json.items():
         children_length = len([c for c in node['children'] if c.startswith(Constants.NODE_FIX)])
         if children_length == 1:
             tree_json = merge_tree(tree_json)
